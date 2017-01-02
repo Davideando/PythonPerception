@@ -1,4 +1,11 @@
+/*
+*		Face Detector
+*			Program to detect faces
+*			By David Ortiz Martínez
+*
+*/
 
+// OpenCV Libraries
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -11,15 +18,20 @@
 int main(int argc, char *argv[]) 
 {
 	//OpenCV video capture object
-    cv::VideoCapture camera;
+    cv::VideoCapture capture;
 	
 	//OpenCV image object
     cv::Mat image;
 	
 	//camera id . Associated to device number in /dev/videoX
 	int cam_id; 
-	
-	
+
+	// Variable to store the face clasifier
+	cv::CascadeClassifier face_detect;
+
+	// Variable to store the detected faces
+	std::vector<cv::Rect> faces;
+
 	//check user args
 	switch(argc)
 	{
@@ -36,21 +48,47 @@ int main(int argc, char *argv[])
 	}
 	
 	//advertising to the user 
-	std::cout << "Opening video device " << cam_id << std::endl;
+	std::cout << "Opening video file " << cam_id << std::endl;
 
-	image = cv::imread("indice.jpg");
+	// Loading the video
+	capture = cv::VideoCapture("video.mpeg");
 
-	 if(! image.data )                              // Check for invalid input
+	// Verify if the video is opened
+	if(!capture.isOpened())                              // Check for invalid video
     {
-        std::cout <<  "Could not open or find the image" << std::endl ;
+        std::cout <<  "Could not open or find the video" << std::endl;
         return -1;
     }
 
-    cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
-    cv::imshow( "Display window", image );                   // Show our image inside it.
+    // Load the XML file to detect faces
+    if(!face_detect.load("haarcascade_frontalface_default.xml"))
+    {
+    	std::cout <<  "Could not open of find the XML file" << std::endl;
+    	return -1;
+    }
 
-    cv::waitKey(0);
+    // Program Loop
+    while(1)
+    {
+	    // Se pasa la imagen al Mat
+	  	capture.read(image);
 
-	// Se finaliza el programa
+	  	// Verify if the video is finished
+	  	if(!image.data)
+	  	{
+	  		std::cout << "The video is finished!! Bye" << std::endl;
+	  		break;
+	  	}
+
+	    cv::namedWindow( "Face Detector", cv::WINDOW_AUTOSIZE );// Create a window for display.
+	    cv::imshow( "Face Detector", image );                   // Show our image inside it.
+
+	    cv::waitKey(1);
+	}
+
+	// Destroy all windows
+	cv::destroyWindow("Face Detector");
+
+	// The end of the program
 	return 0; 
 }
