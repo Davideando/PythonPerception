@@ -14,16 +14,27 @@
 #include <iostream>
 #include <cstdlib>
 
+// Defines to control the source of the images
+
+// If Camera is active, the image source is the cámera
+
+//#define Camera
+
+// If the Video is active, the image source is the video file
+#define Video
 
 int main(int argc, char *argv[]) 
 {
-	//OpenCV video capture object
+	// OpenCV video capture object
     cv::VideoCapture capture;
 	
-	//OpenCV image object
+	// OpenCV image object
     cv::Mat image;
+
+    // Gray scale image
+    cv::Mat gray_image;
 	
-	//camera id . Associated to device number in /dev/videoX
+	// Camera id . Associated to device number in /dev/videoX
 	int cam_id; 
 
 	// Variable to store the face clasifier
@@ -47,18 +58,32 @@ int main(int argc, char *argv[])
 			break; 
 	}
 	
-	//advertising to the user 
+	// Advertising to the user 
 	std::cout << "Opening video file " << cam_id << std::endl;
 
-	// Loading the video
-	capture = cv::VideoCapture("video.mpeg");
+	
+	#if defined Video
+		// Init the video file
+		std::cout << "The input source is the Video File\n";
 
-	// Verify if the video is opened
-	if(!capture.isOpened())                              // Check for invalid video
-    {
-        std::cout <<  "Could not open or find the video" << std::endl;
-        return -1;
-    }
+		// Loading the video
+		capture = cv::VideoCapture("video.mpeg");
+
+		// Verify if the video is opened
+		if(!capture.isOpened())                              // Check for invalid video
+	    {
+	        std::cout <<  "Could not open or find the video" << std::endl;
+	        return -1;
+	    }
+	#elif defined Camera
+		// Inicializar la cámara
+		std::cout << "The input source is the camera\n";
+	#else
+		// There is no define uncomented
+		std::cout << "Error in the source of video!!\nExit!!";
+		return -1;
+	#endif
+
 
     // Load the XML file to detect faces
     if(!face_detect.load("haarcascade_frontalface_default.xml"))
@@ -71,23 +96,49 @@ int main(int argc, char *argv[])
     while(1)
     {
 	    // Se pasa la imagen al Mat
-	  	capture.read(image);
+	    #ifdef Video
+	  		capture.read(image);
 
-	  	// Verify if the video is finished
-	  	if(!image.data)
-	  	{
-	  		std::cout << "The video is finished!! Bye" << std::endl;
-	  		break;
-	  	}
+	  		// Verify if the video is finished
+		  	if(!image.data)
+		  	{
+		  		std::cout << "The video is finished!! Bye" << std::endl;
+		  		break;
+		  	}
+	  	#endif
+
+		// Convert the image to Gray scale
+		cv::cvtColor(image, gray_image, CV_BGR2GRAY);
+
+		// Detect the faces as rectangles
+		face_detect.detectMultiScale(	gray_image, // Image
+										faces, 		// Faces location
+										1.3, 		// Scale factor
+										4,			// min Neighbors
+										0 | cv::CASCADE_SCALE_IMAGE,			// Flags
+										cv::Size(30,30));	// Min Size
+
+		// Print all the detected faces
+		for(int i = 0; i < faces.size(); i++)
+		{
+			cv::Rect temp = faces[i];
+			// Print a rectangle 
+			cv::rectangle(	image, 			// Destination image
+							temp, 			// face rectangle
+							CV_RGB(0,255,0), 	// Color
+							2); 				// thickness	 
+		}
 
 	    cv::namedWindow( "Face Detector", cv::WINDOW_AUTOSIZE );// Create a window for display.
 	    cv::imshow( "Face Detector", image );                   // Show our image inside it.
 
-	    cv::waitKey(1);
+	    // If the 'q' is pressed, exit the loop
+	    if(cv::waitKey(1) == 'q')
+	    {
+	    	// Exit the loop
+	    	break;
+	    }
 	}
-
-	// Destroy all windows
-	cv::destroyWindow("Face Detector");
 
 	// The end of the program
 	return 0; 
