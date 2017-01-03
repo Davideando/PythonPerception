@@ -33,6 +33,12 @@ int main(int argc, char *argv[])
 
     // Gray scale image
     cv::Mat gray_image;
+
+    // Hat image
+    cv::Mat Hat;
+
+    // Moustache image
+    cv::Mat Mustache;
 	
 	// Camera id . Associated to device number in /dev/videoX
 	int cam_id; 
@@ -78,6 +84,12 @@ int main(int argc, char *argv[])
 	#elif defined Camera
 		// Inicializar la cámara
 		std::cout << "The input source is the camera\n";
+	    // Open the video stream and make sure it's opened
+    	if( !capture.open(cam_id) ) 
+		{
+	        std::cout << "Error opening the camera. May be invalid device id. EXIT program." << std::endl;
+        	return -1;
+		}
 	#else
 		// There is no define uncomented
 		std::cout << "Error in the source of video!!\nExit!!";
@@ -92,20 +104,36 @@ int main(int argc, char *argv[])
     	return -1;
     }
 
+    // Load the mustache & Hat images
+    Hat = cv::imread("hat.png");
+
+	if(! Hat.data )                            // Check for invalid input
+    {
+        std::cout <<  "Could not open or find the hat image" << std::endl ;
+        return -1;
+    }
+     
+    Mustache = cv::imread("moustache.png");
+
+	if(! Mustache.data )                            // Check for invalid input
+    {
+        std::cout <<  "Could not open or find the hat image" << std::endl ;
+        return -1;
+    }
+
     // Program Loop
     while(1)
     {
-	    // Se pasa la imagen al Mat
-	    #ifdef Video
-	  		capture.read(image);
+	    // Get the next image
+	  	capture.read(image);
 
-	  		// Verify if the video is finished
-		  	if(!image.data)
-		  	{
-		  		std::cout << "The video is finished!! Bye" << std::endl;
-		  		break;
-		  	}
-	  	#endif
+  		// Verify if the video is finished or webcam is closed
+	  	if(!image.data)
+	  	{
+	  		std::cout << "The video is finished!! Bye" << std::endl;
+	  		break;
+	  	}
+
 
 		// Convert the image to Gray scale
 		cv::cvtColor(image, gray_image, CV_BGR2GRAY);
@@ -128,6 +156,8 @@ int main(int argc, char *argv[])
 							CV_RGB(0,255,0), 	// Color
 							2); 				// thickness	 
 		}
+
+		Mustache.copyTo(image);
 
 	    cv::namedWindow( "Face Detector", cv::WINDOW_AUTOSIZE );// Create a window for display.
 	    cv::imshow( "Face Detector", image );                   // Show our image inside it.
