@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 		std::cout << "The input source is the Video File\n";
 
 		// Loading the video
-		capture = cv::VideoCapture("video.mpeg");
+		capture = cv::VideoCapture("../img/video.mpeg");
 
 		// Verify if the video is opened
 		if(!capture.isOpened())                              // Check for invalid video
@@ -98,14 +98,14 @@ int main(int argc, char *argv[])
 
 
     // Load the XML file to detect faces
-    if(!face_detect.load("haarcascade_frontalface_default.xml"))
+    if(!face_detect.load("../haarcascade_frontalface_default.xml"))
     {
     	std::cout <<  "Could not open of find the XML file" << std::endl;
     	return -1;
     }
 
     // Load the mustache & Hat images
-    Hat = cv::imread("hat.png");
+    Hat = cv::imread("../img/hat.png");
 
 	if(! Hat.data )                            // Check for invalid input
     {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
         return -1;
     }
      
-    Mustache = cv::imread("moustache.png");
+    Mustache = cv::imread("../img/moustache.png");
 
 	if(! Mustache.data )                            // Check for invalid input
     {
@@ -156,8 +156,6 @@ int main(int argc, char *argv[])
 							CV_RGB(0,255,0), 	// Color
 							2); 				// thickness	 
 		}
-
-		Mustache.copyTo(image);
 
 	    cv::namedWindow( "Face Detector", cv::WINDOW_AUTOSIZE );// Create a window for display.
 	    cv::imshow( "Face Detector", image );                   // Show our image inside it.
