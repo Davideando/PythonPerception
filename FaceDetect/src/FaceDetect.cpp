@@ -18,10 +18,13 @@
 
 // If Camera is active, the image source is the cámera
 
-//#define Camera
+#define Camera
 
 // If the Video is active, the image source is the video file
-#define Video
+//#define Video
+
+// Define of a function to draw the hat and mustache
+cv::Mat decoreImage(cv::Mat input, cv::Mat decoration, cv::Point center, cv::Size face_size);
 
 int main(int argc, char *argv[]) 
 {
@@ -155,6 +158,18 @@ int main(int argc, char *argv[])
 							temp, 			// face rectangle
 							CV_RGB(0,255,0), 	// Color
 							2); 				// thickness	 
+			// Set the center of the image
+			cv::Point center_Hat(temp.x + temp.width*0.5, temp.y);
+			// Print the Hat avoiding to leave the margins of the image
+			if ((center_Hat.y - temp.height*0.5) > 0)
+			{
+				image = decoreImage(image, Hat, center_Hat,cv::Size(temp.width,temp.height));
+			}
+
+			// Print the mustache
+			cv::Point center_Mus(temp.x + temp.width*0.5, temp.y + temp.height*0.7);
+			image = decoreImage(image, Mustache, center_Mus,cv::Size(temp.width/2,temp.height/2));
+			
 		}
 
 	    cv::namedWindow( "Face Detector", cv::WINDOW_AUTOSIZE );// Create a window for display.
@@ -170,4 +185,53 @@ int main(int argc, char *argv[])
 
 	// The end of the program
 	return 0; 
+}
+
+// Define of a function to draw the hat and mustache
+cv::Mat decoreImage(cv::Mat input, cv::Mat decoration, cv::Point center, cv::Size face_size)
+{
+	cv::Mat temp;
+	cv::Mat deco;
+
+	// Resize the decoration to fit in the face
+	cv::resize(decoration, deco, face_size);
+
+	// Define a region of interest where the image of the decoration is placed
+	cv::Rect roi(	center.x-face_size.width/2, 
+					center.y - face_size.height/2, 
+					face_size.width,
+					face_size.height);
+
+	// Copy the part of the image where you want to put the decoration
+	input(roi).copyTo(temp);
+
+	// Create a mask and the inverse mask of the decoration
+	cv::Mat grey,mask,mask_inv;
+	cv::cvtColor(deco, grey, CV_BGR2GRAY);
+	cv::threshold(grey, mask, 200, 255, CV_THRESH_BINARY_INV);
+	//cv::bitwise_not(mask, mask_inv);
+
+	// Select the region of the decoration
+    std::vector<cv::Mat> srcChannels(3),maskChannels(3),result_mask(3);
+    cv::split(deco, srcChannels);
+    cv::bitwise_and(srcChannels[0],mask,result_mask[0]);
+    cv::bitwise_and(srcChannels[1],mask,result_mask[1]);
+    cv::bitwise_and(srcChannels[2],mask,result_mask[2]);
+    cv::merge(result_mask, deco);    
+
+    // Set black all the area outside the decoration
+    mask_inv = 255 - mask;
+    cv::split(temp, maskChannels);
+    cv::bitwise_and(maskChannels[0],mask_inv,result_mask[0]);
+    cv::bitwise_and(maskChannels[1],mask_inv,result_mask[1]);
+    cv::bitwise_and(maskChannels[2],mask_inv,result_mask[2]);
+    cv::merge(result_mask,temp);
+
+	// Put the decoration in ROI
+	cv::addWeighted(deco, 1, temp, 1, 0,deco);
+
+	// Modify the main image and return this image
+	deco.copyTo(input(roi));
+
+	return input;
 }
